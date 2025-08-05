@@ -582,6 +582,190 @@ const Index = () => {
           </Badge>
         </div>
 
+        {/* Easy-to-Read Data Display */}
+        {apiData && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>📋 Easy-to-Read Data</CardTitle>
+              <p className="text-muted-foreground">
+                Human-friendly format • Source: {apiData.source}
+              </p>
+            </CardHeader>
+            <CardContent>
+              {/* Roster Data */}
+              {apiData.endpoint?.includes('roster') && apiData.data && (
+                <div className="space-y-6">
+                  {apiData.data.forwards?.length > 0 && (
+                    <div>
+                      <h3 className="font-semibold text-lg mb-3">⚡ Forwards ({apiData.data.forwards.length})</h3>
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                        {apiData.data.forwards.map((player: any, index: number) => (
+                          <div key={`forward-${index}`} className="bg-muted p-3 rounded">
+                            <div className="font-medium">{player.firstName?.default} {player.lastName?.default}</div>
+                            <div className="text-muted-foreground text-sm">#{player.sweaterNumber}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {apiData.data.defensemen?.length > 0 && (
+                    <div>
+                      <h3 className="font-semibold text-lg mb-3">🛡️ Defensemen ({apiData.data.defensemen.length})</h3>
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                        {apiData.data.defensemen.map((player: any, index: number) => (
+                          <div key={`defense-${index}`} className="bg-muted p-3 rounded">
+                            <div className="font-medium">{player.firstName?.default} {player.lastName?.default}</div>
+                            <div className="text-muted-foreground text-sm">#{player.sweaterNumber}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {apiData.data.goalies?.length > 0 && (
+                    <div>
+                      <h3 className="font-semibold text-lg mb-3">🥅 Goalies ({apiData.data.goalies.length})</h3>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {apiData.data.goalies.map((player: any, index: number) => (
+                          <div key={`goalie-${index}`} className="bg-muted p-3 rounded">
+                            <div className="font-medium">{player.firstName?.default} {player.lastName?.default}</div>
+                            <div className="text-muted-foreground text-sm">#{player.sweaterNumber}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Schedule Data */}
+              {(apiData.endpoint?.includes('schedule') || apiData.endpoint?.includes('club-schedule')) && apiData.data?.games && (
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-lg">📅 Upcoming Games ({apiData.data.games.length})</h3>
+                  <div className="space-y-3">
+                    {apiData.data.games.slice(0, 10).map((game: any, index: number) => (
+                      <div key={`game-${index}`} className="bg-muted p-4 rounded flex justify-between items-center">
+                        <div>
+                          <div className="font-medium">
+                            {game.awayTeam?.placeName?.default || game.awayTeam?.commonName?.default} @ {game.homeTeam?.placeName?.default || game.homeTeam?.commonName?.default}
+                          </div>
+                          <div className="text-muted-foreground text-sm">
+                            {new Date(game.gameDate).toLocaleDateString('en-US', { 
+                              weekday: 'long', 
+                              year: 'numeric', 
+                              month: 'long', 
+                              day: 'numeric' 
+                            })}
+                          </div>
+                          <div className="text-muted-foreground text-xs">{game.venue?.default}</div>
+                        </div>
+                        <div className="text-right">
+                          <Badge variant={game.gameType === 1 ? 'secondary' : 'default'}>
+                            {game.gameType === 1 ? 'Preseason' : 'Regular Season'}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                    {apiData.data.games.length > 10 && (
+                      <div className="text-center text-muted-foreground text-sm">
+                        ...and {apiData.data.games.length - 10} more games
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Current Schedule/Games */}
+              {apiData.data?.gameWeek && (
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-lg">🏒 Today's NHL Games</h3>
+                  <div className="space-y-3">
+                    {apiData.data.gameWeek[0]?.games?.map((game: any, index: number) => (
+                      <div key={`today-game-${index}`} className="bg-muted p-4 rounded flex justify-between items-center">
+                        <div>
+                          <div className="font-medium">
+                            {game.awayTeam?.placeName?.default} @ {game.homeTeam?.placeName?.default}
+                          </div>
+                          <div className="text-muted-foreground text-sm">
+                            {new Date(game.startTimeUTC).toLocaleTimeString('en-US', { 
+                              hour: 'numeric', 
+                              minute: '2-digit',
+                              timeZoneName: 'short'
+                            })}
+                          </div>
+                        </div>
+                        <Badge variant={game.gameState === 'LIVE' ? 'destructive' : 'default'}>
+                          {game.gameState}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Standings Data */}
+              {apiData.data?.standings && (
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-lg">🏆 NHL Standings</h3>
+                  <div className="space-y-2">
+                    {apiData.data.standings.slice(0, 10).map((team: any, index: number) => (
+                      <div key={`standing-${index}`} className="bg-muted p-3 rounded flex justify-between items-center">
+                        <div>
+                          <span className="font-medium">#{index + 1} {team.teamName?.default}</span>
+                          <span className="text-muted-foreground text-sm ml-2">
+                            ({team.wins}-{team.losses}-{team.otLosses})
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-medium">{team.points} pts</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Player Stats/Leaders */}
+              {apiData.data?.data && Array.isArray(apiData.data.data) && (
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-lg">⭐ Player Leaders</h3>
+                  <div className="space-y-2">
+                    {apiData.data.data.slice(0, 10).map((player: any, index: number) => (
+                      <div key={`leader-${index}`} className="bg-muted p-3 rounded flex justify-between items-center">
+                        <div>
+                          <span className="font-medium">{player.skaterFullName || player.playerName}</span>
+                          <span className="text-muted-foreground text-sm ml-2">
+                            {player.teamAbbrevs || player.teamAbbrev}
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-medium">
+                            {player.points || player.goals || player.assists || player.stat} 
+                            {player.points ? ' pts' : player.goals ? ' goals' : ''}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Fallback for unrecognized data */}
+              {!apiData.endpoint?.includes('roster') && 
+               !apiData.endpoint?.includes('schedule') && 
+               !apiData.data?.gameWeek && 
+               !apiData.data?.standings && 
+               !apiData.data?.data && (
+                <div className="text-center text-muted-foreground">
+                  <p>📊 Data received but format not recognized for easy display.</p>
+                  <p className="text-sm">Check the API Response Data below for full details.</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
         {/* Easy-to-Read Player Names - Show when roster data is available */}
         {apiData && apiData.endpoint?.includes('roster') && apiData.data && (
           <Card className="mb-6">
