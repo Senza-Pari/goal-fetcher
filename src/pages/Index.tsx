@@ -168,6 +168,77 @@ const Index = () => {
   };
 
   /**
+   * TEST 2025-26 SEASON SCHEDULE - FUTURE SEASON VALIDATION
+   * 
+   * This function validates that we can fetch schedule data for upcoming seasons.
+   * NHL API uses season format: 20252026 for 2025-26 season
+   * 
+   * Endpoints to try:
+   * - Season schedule overview
+   * - Team-specific schedules for 2025-26
+   * - Pre-season and regular season games
+   */
+  const test2025Season = async () => {
+    setConnectionStatus('testing');
+    setApiData(null);
+    
+    // Multiple 2025-26 season endpoints to try
+    const seasonEndpoints = [
+      'https://api-web.nhle.com/v1/schedule/2025-26/2025-10-01', // Season start date
+      'https://api-web.nhle.com/v1/season/20252026', // Season info
+      'https://api-web.nhle.com/v1/schedule/20252026', // Full season schedule
+      'https://api-web.nhle.com/v1/club-schedule-season/TOR/20252026', // Team-specific schedule (using TOR as example)
+    ];
+    
+    for (let endpointIndex = 0; endpointIndex < seasonEndpoints.length; endpointIndex++) {
+      const targetUrl = seasonEndpoints[endpointIndex];
+      
+      // Try each CORS proxy for this endpoint
+      for (let i = 0; i < CORS_PROXIES.length; i++) {
+        const proxyUrl = CORS_PROXIES[i];
+        const fullUrl = proxyUrl + encodeURIComponent(targetUrl);
+        
+        try {
+          console.log(`Attempting 2025-26 Season API (endpoint ${endpointIndex + 1}) via proxy ${i + 1}:`, fullUrl);
+          
+          const response = await fetch(fullUrl);
+          
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          
+          const data = await response.json();
+          setApiData({
+            source: '2025-26 NHL Season API',
+            endpoint: targetUrl,
+            proxy: proxyUrl,
+            data: data
+          });
+          setConnectionStatus('success');
+          
+          toast({
+            title: "2025-26 Season API Connection Successful!",
+            description: `Found 2025-26 season data via ${targetUrl.split('/').pop()}`,
+          });
+          
+          return; // Success, exit both loops
+          
+        } catch (error) {
+          console.error(`2025-26 Season Endpoint ${endpointIndex + 1}, Proxy ${i + 1} failed:`, error);
+        }
+      }
+    }
+    
+    // If we get here, all endpoints and proxies failed
+    setConnectionStatus('error');
+    toast({
+      title: "2025-26 Season API Connection Failed",
+      description: "Season data may not be available yet or endpoints have changed.",
+      variant: "destructive",
+    });
+  };
+
+  /**
    * TEST NHL STANDINGS API - TEAM STANDINGS
    * 
    * This function tests the NHL Web API's standings endpoint which provides:
@@ -240,7 +311,7 @@ const Index = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <Card>
             <CardHeader>
               <CardTitle>NHL Web API</CardTitle>
@@ -296,6 +367,26 @@ const Index = () => {
                 variant="outline"
               >
                 {connectionStatus === 'testing' ? 'Testing...' : 'Test Stats API'}
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>2025-26 Season</CardTitle>
+              <p className="text-muted-foreground">Future Season Data</p>
+            </CardHeader>
+            <CardContent>
+              <p className="mb-4 text-sm">
+                Test access to upcoming 2025-26 NHL season schedules and data
+              </p>
+              <Button 
+                onClick={test2025Season}
+                disabled={connectionStatus === 'testing'}
+                className="w-full"
+                variant="default"
+              >
+                {connectionStatus === 'testing' ? 'Testing...' : 'Test 2025-26 Season'}
               </Button>
             </CardContent>
           </Card>
