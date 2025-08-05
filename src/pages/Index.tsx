@@ -9,20 +9,45 @@ const Index = () => {
   const [apiData, setApiData] = useState<any>(null);
   const { toast } = useToast();
 
-  // Multiple CORS proxy options for reliability
+  /**
+   * CORS PROXY SOLUTION FOR NHL API ACCESS
+   * 
+   * Problem: NHL APIs (api-web.nhle.com, api.nhle.com) don't include CORS headers,
+   * causing "CORS policy" errors when accessed directly from browser applications.
+   * 
+   * Solution: Use CORS proxy services that add the necessary headers.
+   * We maintain multiple proxies for reliability - if one fails, we try the next.
+   * 
+   * Proxy Services:
+   * 1. api.allorigins.win - Most reliable, good uptime
+   * 2. corsproxy.io - Fast and stable backup
+   * 3. cors-anywhere.herokuapp.com - Secondary backup (rate limited)
+   */
   const CORS_PROXIES = [
     'https://api.allorigins.win/raw?url=',
     'https://corsproxy.io/?',
     'https://cors-anywhere.herokuapp.com/',
   ];
 
+  /**
+   * TEST NHL WEB API - SCHEDULE ENDPOINT
+   * 
+   * This function tests the primary NHL Web API which provides:
+   * - Current and upcoming game schedules
+   * - Live game data and scores
+   * - Real-time updates
+   * 
+   * Endpoint: https://api-web.nhle.com/v1/schedule/now
+   * Returns: Today's NHL games and schedule information
+   */
   const testNHLConnection = async () => {
     setConnectionStatus('testing');
     setApiData(null);
     
     const targetUrl = 'https://api-web.nhle.com/v1/schedule/now';
     
-    // Try each CORS proxy until one works
+    // PROXY FALLBACK SYSTEM: Try each CORS proxy until one works
+    // This ensures reliability - if one proxy service is down, we try the next
     for (let i = 0; i < CORS_PROXIES.length; i++) {
       const proxyUrl = CORS_PROXIES[i];
       const fullUrl = proxyUrl + encodeURIComponent(targetUrl);
@@ -67,11 +92,26 @@ const Index = () => {
     }
   };
 
+  /**
+   * TEST NHL STATS API - STATISTICAL DATA
+   * 
+   * This function tests the NHL Stats API which provides:
+   * - Player statistics and rankings
+   * - Team performance data
+   * - Historical statistics
+   * - League leaders and records
+   * 
+   * Strategy: Try multiple endpoints to find the most reliable one.
+   * Different endpoints may have different availability/reliability.
+   */
   const testStatsAPI = async () => {
     setConnectionStatus('testing');
     setApiData(null);
     
-    // Try different Stats API endpoints that are more likely to work
+    // Multiple Stats API endpoints - we try each until one works
+    // team: Basic team information and stats
+    // leaders/skaters/points: Top point scorers (usually very reliable)
+    // season: Current season information
     const statsEndpoints = [
       'https://api.nhle.com/stats/rest/en/team',
       'https://api.nhle.com/stats/rest/en/leaders/skaters/points',
@@ -81,7 +121,8 @@ const Index = () => {
     for (let endpointIndex = 0; endpointIndex < statsEndpoints.length; endpointIndex++) {
       const targetUrl = statsEndpoints[endpointIndex];
       
-      // Try each CORS proxy for this endpoint
+      // NESTED FALLBACK: Try each CORS proxy for this endpoint
+      // If an endpoint fails on one proxy, we try it on other proxies before moving to next endpoint
       for (let i = 0; i < CORS_PROXIES.length; i++) {
         const proxyUrl = CORS_PROXIES[i];
         const fullUrl = proxyUrl + encodeURIComponent(targetUrl);
@@ -126,7 +167,18 @@ const Index = () => {
     });
   };
 
-  // Also let's test the correct standings endpoint for the Web API
+  /**
+   * TEST NHL STANDINGS API - TEAM STANDINGS
+   * 
+   * This function tests the NHL Web API's standings endpoint which provides:
+   * - Current team standings by division/conference
+   * - Win/loss records
+   * - Points and playoff positioning
+   * - Conference and division rankings
+   * 
+   * Endpoint: https://api-web.nhle.com/v1/standings/now
+   * Returns: Complete NHL standings as of current date
+   */
   const testStandingsAPI = async () => {
     setConnectionStatus('testing');
     setApiData(null);
