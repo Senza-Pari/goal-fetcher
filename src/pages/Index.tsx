@@ -9,36 +9,61 @@ const Index = () => {
   const [apiData, setApiData] = useState<any>(null);
   const { toast } = useToast();
 
+  // Multiple CORS proxy options for reliability
+  const CORS_PROXIES = [
+    'https://api.allorigins.win/raw?url=',
+    'https://corsproxy.io/?',
+    'https://cors-anywhere.herokuapp.com/',
+  ];
+
   const testNHLConnection = async () => {
     setConnectionStatus('testing');
     setApiData(null);
     
-    try {
-      // Test NHL Web API - Get today's schedule
-      const response = await fetch('https://api-web.nhle.com/v1/schedule/now');
+    const targetUrl = 'https://api-web.nhle.com/v1/schedule/now';
+    
+    // Try each CORS proxy until one works
+    for (let i = 0; i < CORS_PROXIES.length; i++) {
+      const proxyUrl = CORS_PROXIES[i];
+      const fullUrl = proxyUrl + encodeURIComponent(targetUrl);
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      try {
+        console.log(`Attempting NHL Web API connection via proxy ${i + 1}:`, fullUrl);
+        
+        const response = await fetch(fullUrl);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        setApiData({
+          source: 'NHL Web API',
+          proxy: proxyUrl,
+          data: data
+        });
+        setConnectionStatus('success');
+        
+        toast({
+          title: "NHL API Connection Successful!",
+          description: `Connected via proxy ${i + 1}: ${proxyUrl}`,
+        });
+        
+        return; // Success, exit the loop
+        
+      } catch (error) {
+        console.error(`Proxy ${i + 1} failed:`, error);
+        
+        // If this was the last proxy, show error
+        if (i === CORS_PROXIES.length - 1) {
+          setConnectionStatus('error');
+          toast({
+            title: "NHL API Connection Failed",
+            description: "All proxy services failed. Please try again later.",
+            variant: "destructive",
+          });
+        }
       }
-      
-      const data = await response.json();
-      setApiData(data);
-      setConnectionStatus('success');
-      
-      toast({
-        title: "NHL API Connection Successful!",
-        description: "Successfully connected to the NHL API and retrieved data.",
-      });
-      
-    } catch (error) {
-      console.error('NHL API connection failed:', error);
-      setConnectionStatus('error');
-      
-      toast({
-        title: "NHL API Connection Failed",
-        description: "Could not connect to the NHL API. Please try again.",
-        variant: "destructive",
-      });
     }
   };
 
@@ -46,32 +71,50 @@ const Index = () => {
     setConnectionStatus('testing');
     setApiData(null);
     
-    try {
-      // Test NHL Stats API - Get current standings
-      const response = await fetch('https://api.nhle.com/stats/rest/en/standings');
+    const targetUrl = 'https://api.nhle.com/stats/rest/en/standings';
+    
+    // Try each CORS proxy until one works
+    for (let i = 0; i < CORS_PROXIES.length; i++) {
+      const proxyUrl = CORS_PROXIES[i];
+      const fullUrl = proxyUrl + encodeURIComponent(targetUrl);
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      try {
+        console.log(`Attempting NHL Stats API connection via proxy ${i + 1}:`, fullUrl);
+        
+        const response = await fetch(fullUrl);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        setApiData({
+          source: 'NHL Stats API',
+          proxy: proxyUrl,
+          data: data
+        });
+        setConnectionStatus('success');
+        
+        toast({
+          title: "NHL Stats API Connection Successful!",
+          description: `Connected via proxy ${i + 1}: ${proxyUrl}`,
+        });
+        
+        return; // Success, exit the loop
+        
+      } catch (error) {
+        console.error(`Proxy ${i + 1} failed:`, error);
+        
+        // If this was the last proxy, show error
+        if (i === CORS_PROXIES.length - 1) {
+          setConnectionStatus('error');
+          toast({
+            title: "NHL Stats API Connection Failed",
+            description: "All proxy services failed. Please try again later.",
+            variant: "destructive",
+          });
+        }
       }
-      
-      const data = await response.json();
-      setApiData(data);
-      setConnectionStatus('success');
-      
-      toast({
-        title: "NHL Stats API Connection Successful!",
-        description: "Successfully connected to the NHL Stats API and retrieved standings data.",
-      });
-      
-    } catch (error) {
-      console.error('NHL Stats API connection failed:', error);
-      setConnectionStatus('error');
-      
-      toast({
-        title: "NHL Stats API Connection Failed",
-        description: "Could not connect to the NHL Stats API. Please try again.",
-        variant: "destructive",
-      });
     }
   };
 
