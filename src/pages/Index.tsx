@@ -71,7 +71,67 @@ const Index = () => {
     setConnectionStatus('testing');
     setApiData(null);
     
-    const targetUrl = 'https://api.nhle.com/stats/rest/en/standings';
+    // Try different Stats API endpoints that are more likely to work
+    const statsEndpoints = [
+      'https://api.nhle.com/stats/rest/en/team',
+      'https://api.nhle.com/stats/rest/en/leaders/skaters/points',
+      'https://api.nhle.com/stats/rest/en/season'
+    ];
+    
+    for (let endpointIndex = 0; endpointIndex < statsEndpoints.length; endpointIndex++) {
+      const targetUrl = statsEndpoints[endpointIndex];
+      
+      // Try each CORS proxy for this endpoint
+      for (let i = 0; i < CORS_PROXIES.length; i++) {
+        const proxyUrl = CORS_PROXIES[i];
+        const fullUrl = proxyUrl + encodeURIComponent(targetUrl);
+        
+        try {
+          console.log(`Attempting NHL Stats API (endpoint ${endpointIndex + 1}) via proxy ${i + 1}:`, fullUrl);
+          
+          const response = await fetch(fullUrl);
+          
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          
+          const data = await response.json();
+          setApiData({
+            source: 'NHL Stats API',
+            endpoint: targetUrl,
+            proxy: proxyUrl,
+            data: data
+          });
+          setConnectionStatus('success');
+          
+          toast({
+            title: "NHL Stats API Connection Successful!",
+            description: `Connected to ${targetUrl.split('/').pop()} via proxy ${i + 1}`,
+          });
+          
+          return; // Success, exit both loops
+          
+        } catch (error) {
+          console.error(`Endpoint ${endpointIndex + 1}, Proxy ${i + 1} failed:`, error);
+        }
+      }
+    }
+    
+    // If we get here, all endpoints and proxies failed
+    setConnectionStatus('error');
+    toast({
+      title: "NHL Stats API Connection Failed",
+      description: "All endpoints and proxy services failed. Please try again later.",
+      variant: "destructive",
+    });
+  };
+
+  // Also let's test the correct standings endpoint for the Web API
+  const testStandingsAPI = async () => {
+    setConnectionStatus('testing');
+    setApiData(null);
+    
+    const targetUrl = 'https://api-web.nhle.com/v1/standings/now';
     
     // Try each CORS proxy until one works
     for (let i = 0; i < CORS_PROXIES.length; i++) {
@@ -79,7 +139,7 @@ const Index = () => {
       const fullUrl = proxyUrl + encodeURIComponent(targetUrl);
       
       try {
-        console.log(`Attempting NHL Stats API connection via proxy ${i + 1}:`, fullUrl);
+        console.log(`Attempting NHL Standings API via proxy ${i + 1}:`, fullUrl);
         
         const response = await fetch(fullUrl);
         
@@ -89,14 +149,14 @@ const Index = () => {
         
         const data = await response.json();
         setApiData({
-          source: 'NHL Stats API',
+          source: 'NHL Standings API',
           proxy: proxyUrl,
           data: data
         });
         setConnectionStatus('success');
         
         toast({
-          title: "NHL Stats API Connection Successful!",
+          title: "NHL Standings API Connection Successful!",
           description: `Connected via proxy ${i + 1}: ${proxyUrl}`,
         });
         
@@ -109,7 +169,7 @@ const Index = () => {
         if (i === CORS_PROXIES.length - 1) {
           setConnectionStatus('error');
           toast({
-            title: "NHL Stats API Connection Failed",
+            title: "NHL Standings API Connection Failed",
             description: "All proxy services failed. Please try again later.",
             variant: "destructive",
           });
@@ -128,11 +188,11 @@ const Index = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card>
             <CardHeader>
               <CardTitle>NHL Web API</CardTitle>
-              <p className="text-muted-foreground">api-web.nhle.com</p>
+              <p className="text-muted-foreground">Schedule Data</p>
             </CardHeader>
             <CardContent>
               <p className="mb-4 text-sm">
@@ -143,7 +203,27 @@ const Index = () => {
                 disabled={connectionStatus === 'testing'}
                 className="w-full"
               >
-                {connectionStatus === 'testing' ? 'Testing Connection...' : 'Test Web API'}
+                {connectionStatus === 'testing' ? 'Testing...' : 'Test Schedule API'}
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>NHL Standings</CardTitle>
+              <p className="text-muted-foreground">Standings Data</p>
+            </CardHeader>
+            <CardContent>
+              <p className="mb-4 text-sm">
+                Current NHL standings and team positions
+              </p>
+              <Button 
+                onClick={testStandingsAPI}
+                disabled={connectionStatus === 'testing'}
+                className="w-full"
+                variant="secondary"
+              >
+                {connectionStatus === 'testing' ? 'Testing...' : 'Test Standings API'}
               </Button>
             </CardContent>
           </Card>
@@ -151,11 +231,11 @@ const Index = () => {
           <Card>
             <CardHeader>
               <CardTitle>NHL Stats API</CardTitle>
-              <p className="text-muted-foreground">api.nhle.com/stats/rest</p>
+              <p className="text-muted-foreground">Player & Team Stats</p>
             </CardHeader>
             <CardContent>
               <p className="mb-4 text-sm">
-                Statistical data including standings, player stats, and historical data
+                Statistical data including player stats, leaders, and historical data
               </p>
               <Button 
                 onClick={testStatsAPI}
@@ -163,7 +243,7 @@ const Index = () => {
                 className="w-full"
                 variant="outline"
               >
-                {connectionStatus === 'testing' ? 'Testing Connection...' : 'Test Stats API'}
+                {connectionStatus === 'testing' ? 'Testing...' : 'Test Stats API'}
               </Button>
             </CardContent>
           </Card>
