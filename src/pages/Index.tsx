@@ -500,6 +500,40 @@ const Index = () => {
           </Badge>
         </div>
 
+        {/* Easy-to-Read Player Names - Show when roster data is available */}
+        {apiData && apiData.endpoint?.includes('roster') && apiData.data && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>🏒 Team Roster - Player Names</CardTitle>
+              <p className="text-muted-foreground">
+                Easy-to-read format for quick checking
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                {apiData.data.forwards?.map((player: any, index: number) => (
+                  <div key={`forward-${index}`} className="bg-muted p-3 rounded text-sm">
+                    <div className="font-medium">{player.firstName?.default} {player.lastName?.default}</div>
+                    <div className="text-muted-foreground text-xs">#{player.sweaterNumber} • Forward</div>
+                  </div>
+                ))}
+                {apiData.data.defensemen?.map((player: any, index: number) => (
+                  <div key={`defense-${index}`} className="bg-muted p-3 rounded text-sm">
+                    <div className="font-medium">{player.firstName?.default} {player.lastName?.default}</div>
+                    <div className="text-muted-foreground text-xs">#{player.sweaterNumber} • Defense</div>
+                  </div>
+                ))}
+                {apiData.data.goalies?.map((player: any, index: number) => (
+                  <div key={`goalie-${index}`} className="bg-muted p-3 rounded text-sm">
+                    <div className="font-medium">{player.firstName?.default} {player.lastName?.default}</div>
+                    <div className="text-muted-foreground text-xs">#{player.sweaterNumber} • Goalie</div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* API Response Data */}
         {apiData && (
           <Card>
@@ -512,6 +546,13 @@ const Index = () => {
                   {JSON.stringify(apiData, null, 2)}
                 </pre>
               </div>
+              <Button 
+                onClick={() => setApiData(null)}
+                variant="outline"
+                className="mt-4"
+              >
+                Clear Data
+              </Button>
             </CardContent>
           </Card>
         )}
