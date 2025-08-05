@@ -239,6 +239,78 @@ const Index = () => {
   };
 
   /**
+   * TEST COLORADO AVALANCHE DATA - ROSTER AND SCHEDULE
+   * 
+   * This function fetches specific data for the Colorado Avalanche:
+   * - Current roster information
+   * - 2025-26 season schedule (including preseason)
+   * - Team information
+   * 
+   * Colorado Avalanche team code: COL
+   */
+  const testAvalancheData = async () => {
+    setConnectionStatus('testing');
+    setApiData(null);
+    
+    // Colorado Avalanche specific endpoints
+    const avalancheEndpoints = [
+      'https://api-web.nhle.com/v1/club-schedule-season/COL/20252026', // Full season schedule
+      'https://api-web.nhle.com/v1/roster/COL/current', // Current roster
+      'https://api-web.nhle.com/v1/club-stats/COL/20252026/2', // Team stats
+    ];
+    
+    for (let endpointIndex = 0; endpointIndex < avalancheEndpoints.length; endpointIndex++) {
+      const targetUrl = avalancheEndpoints[endpointIndex];
+      
+      // Try each CORS proxy for this endpoint
+      for (let i = 0; i < CORS_PROXIES.length; i++) {
+        const proxyUrl = CORS_PROXIES[i];
+        const fullUrl = proxyUrl + encodeURIComponent(targetUrl);
+        
+        try {
+          console.log(`Attempting Colorado Avalanche API (endpoint ${endpointIndex + 1}) via proxy ${i + 1}:`, fullUrl);
+          
+          const response = await fetch(fullUrl);
+          
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          
+          const data = await response.json();
+          setApiData({
+            source: 'Colorado Avalanche API',
+            endpoint: targetUrl,
+            proxy: proxyUrl,
+            data: data
+          });
+          setConnectionStatus('success');
+          
+          const endpointName = targetUrl.includes('schedule') ? 'Schedule' : 
+                              targetUrl.includes('roster') ? 'Roster' : 'Stats';
+          
+          toast({
+            title: "Colorado Avalanche Data Retrieved!",
+            description: `Successfully fetched ${endpointName} data for comparison`,
+          });
+          
+          return; // Success, exit both loops
+          
+        } catch (error) {
+          console.error(`Avalanche Endpoint ${endpointIndex + 1}, Proxy ${i + 1} failed:`, error);
+        }
+      }
+    }
+    
+    // If we get here, all endpoints and proxies failed
+    setConnectionStatus('error');
+    toast({
+      title: "Colorado Avalanche API Failed",
+      description: "Could not retrieve Avalanche data. Please try again later.",
+      variant: "destructive",
+    });
+  };
+
+  /**
    * TEST NHL STANDINGS API - TEAM STANDINGS
    * 
    * This function tests the NHL Web API's standings endpoint which provides:
@@ -311,7 +383,7 @@ const Index = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           <Card>
             <CardHeader>
               <CardTitle>NHL Web API</CardTitle>
@@ -387,6 +459,26 @@ const Index = () => {
                 variant="default"
               >
                 {connectionStatus === 'testing' ? 'Testing...' : 'Test 2025-26 Season'}
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="md:col-span-2 lg:col-span-1">
+            <CardHeader>
+              <CardTitle>🏔️ Colorado Avalanche</CardTitle>
+              <p className="text-muted-foreground">Roster & Schedule</p>
+            </CardHeader>
+            <CardContent>
+              <p className="mb-4 text-sm">
+                Get Colorado Avalanche roster and 2025-26 preseason/regular season schedule for comparison
+              </p>
+              <Button 
+                onClick={testAvalancheData}
+                disabled={connectionStatus === 'testing'}
+                className="w-full"
+                variant="destructive"
+              >
+                {connectionStatus === 'testing' ? 'Testing...' : 'Get Avalanche Data'}
               </Button>
             </CardContent>
           </Card>
