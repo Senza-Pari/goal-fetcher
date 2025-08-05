@@ -1,0 +1,25 @@
+{
+  "name": "@your-username/nhl-api",
+  "version": "1.0.0",
+  "description": "Reliable NHL API integration with automatic CORS proxy fallback",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": ["nhl", "api", "hockey", "sports", "cors"],
+  "author": "Your Name",
+  "license": "MIT",
+  "peerDependencies": {
+    "react": "^18.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/react": "^18.0.0"
+  },
+  "files": [
+    "dist/**/*",
+    "README.md"
+  ]
+}
