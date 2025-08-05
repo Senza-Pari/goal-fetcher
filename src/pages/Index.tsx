@@ -311,6 +311,68 @@ const Index = () => {
   };
 
   /**
+   * TEST COLORADO AVALANCHE ROSTER ONLY
+   * 
+   * This function specifically fetches only the Colorado Avalanche current roster:
+   * - Current player list with positions
+   * - Player names, numbers, and details
+   * 
+   * Colorado Avalanche team code: COL
+   * Endpoint: https://api-web.nhle.com/v1/roster/COL/current
+   */
+  const testAvalancheRoster = async () => {
+    setConnectionStatus('testing');
+    setApiData(null);
+    
+    const targetUrl = 'https://api-web.nhle.com/v1/roster/COL/current';
+    
+    // Try each CORS proxy until one works
+    for (let i = 0; i < CORS_PROXIES.length; i++) {
+      const proxyUrl = CORS_PROXIES[i];
+      const fullUrl = proxyUrl + encodeURIComponent(targetUrl);
+      
+      try {
+        console.log(`Attempting Colorado Avalanche Roster API via proxy ${i + 1}:`, fullUrl);
+        
+        const response = await fetch(fullUrl);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        setApiData({
+          source: 'Colorado Avalanche Roster API',
+          endpoint: targetUrl,
+          proxy: proxyUrl,
+          data: data
+        });
+        setConnectionStatus('success');
+        
+        toast({
+          title: "Colorado Avalanche Roster Retrieved!",
+          description: `Successfully fetched current roster data`,
+        });
+        
+        return; // Success, exit the loop
+        
+      } catch (error) {
+        console.error(`Proxy ${i + 1} failed:`, error);
+        
+        // If this was the last proxy, show error
+        if (i === CORS_PROXIES.length - 1) {
+          setConnectionStatus('error');
+          toast({
+            title: "Colorado Avalanche Roster API Failed",
+            description: "Could not retrieve roster data. Please try again later.",
+            variant: "destructive",
+          });
+        }
+      }
+    }
+  };
+
+  /**
    * TEST NHL STANDINGS API - TEAM STANDINGS
    * 
    * This function tests the NHL Web API's standings endpoint which provides:
@@ -479,6 +541,26 @@ const Index = () => {
                 variant="destructive"
               >
                 {connectionStatus === 'testing' ? 'Testing...' : 'Get Avalanche Data'}
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>🏒 Avalanche Roster Only</CardTitle>
+              <p className="text-muted-foreground">Current Roster</p>
+            </CardHeader>
+            <CardContent>
+              <p className="mb-4 text-sm">
+                Test only the Colorado Avalanche current roster endpoint
+              </p>
+              <Button 
+                onClick={testAvalancheRoster}
+                disabled={connectionStatus === 'testing'}
+                className="w-full"
+                variant="destructive"
+              >
+                {connectionStatus === 'testing' ? 'Testing...' : 'Get Roster Only'}
               </Button>
             </CardContent>
           </Card>
